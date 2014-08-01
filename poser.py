@@ -1,12 +1,23 @@
 import json, re, requests, os, subprocess
 
+# You can enter your Github credentials to increase the 
+# API rate limit from 60 to 5,000 calls per hour
+api_user = ''
+api_password = ''
+
+# Loop so you can immediately retry when given username doesn't exists
 while (1):
     email = None
     real_name = None
     username = raw_input("\nAs which user would you like to commit: ").lower()
 
-    req_userdata = requests.get('https://api.github.com/users/%s' % username)
-    req_events = requests.get('https://api.github.com/users/%s/events' % username)
+    # If given, use Github credentials to extend API rate limit
+    if api_user != '' and api_password != '':
+        req_userdata = requests.get('https://api.github.com/users/%s' % username, auth=(api_user, api_password))
+        req_events = requests.get('https://api.github.com/users/%s/events' % username, auth=(api_user, api_password))
+    else:
+        req_userdata = requests.get('https://api.github.com/users/%s' % username)
+        req_events = requests.get('https://api.github.com/users/%s/events' % username)
 
     result_json = json.loads(req_userdata.text)
     try:
@@ -42,12 +53,14 @@ while (1):
         if email == None:
             print 'sorry, can\'t find the email for user %s' % username
 
+        # Email found; set the username + email and run the push command
         else:
 
             print 'Pushing as user %s with address %s' % (username, email)
 
             commit_message = raw_input("Enter your commit message: ")
 
+            # Save the original name and email
             proc = subprocess.Popen(['git config user.name'], stdout=subprocess.PIPE, shell=True)
             (prev_name, err) = proc.communicate()
             proc = subprocess.Popen(['git config user.email'], stdout=subprocess.PIPE, shell=True)
