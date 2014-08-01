@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import json, re, requests, os, subprocess
 
 # You can enter your Github credentials to increase the 
@@ -5,7 +6,7 @@ import json, re, requests, os, subprocess
 api_user = ''
 api_password = ''
 
-# Loop so you can immediately retry when given username doesn't exists
+# Loop so you can immediately retry in case the given username doesn't exists
 while (1):
     email = None
     real_name = None
@@ -20,12 +21,15 @@ while (1):
         req_events = requests.get('https://api.github.com/users/%s/events' % username)
 
     result_json = json.loads(req_userdata.text)
+
+    # See if we can find the name of the user
     try:
         real_name = result_json['name']
     except: pass      
     
     result_json = json.loads(req_events.text)
 
+    # Catch some error messages
     if 'message' in result_json:
         if result_json['message'] == 'Not Found':
             print 'There is no user called %s, or can\'t find the needed user date.' % username
@@ -37,6 +41,8 @@ while (1):
             print "Uncaught message: "
             print result_json['message']
             exit()
+
+    # No error, so try to find email
     else:
         for event in result_json:
             try:
@@ -65,11 +71,18 @@ while (1):
             (prev_name, err) = proc.communicate()
             proc = subprocess.Popen(['git config user.email'], stdout=subprocess.PIPE, shell=True)
             (prev_email, err) = proc.communicate()
+
+            # Set email to that of the given user
             os.system('git config user.name "%s"' % username)
             os.system('git config user.email "%s"' % email)
+
+            # commit and push
             os.system('git commit -m "%s"' % commit_message)
             os.system('git push -u origin master')
 
+            # Restore original username and email
             os.system('git config user.name "%s"' % prev_name.rstrip())
             os.system('git config user.email "%s"' % prev_email.rstrip())
+
+            # All done, exit!
             exit()
