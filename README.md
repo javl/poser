@@ -4,7 +4,7 @@
 Poser lets you commit and push to Github as any user.
 
 ####Usage
-Simply add your files with `git add` and run `./poser`. The script will ask you for the username and commit message to use.
+Simply add your files with `git add` and run `./poser` instead of `git commit -a`. The script will ask you for the username and commit message to use.
 
 
 
